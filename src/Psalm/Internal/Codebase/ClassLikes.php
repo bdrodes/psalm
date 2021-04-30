@@ -454,6 +454,77 @@ class ClassLikes
         return true;
     }
 
+    public function hasFullyQualifiedEnumName(
+        string $fq_class_name,
+        ?CodeLocation $code_location = null,
+        ?string $calling_fq_class_name = null,
+        ?string $calling_method_id = null
+    ): bool {
+        $fq_class_name_lc = strtolower($fq_class_name);
+
+        if (isset($this->classlike_aliases[$fq_class_name_lc])) {
+            $fq_class_name_lc = strtolower($this->classlike_aliases[$fq_class_name_lc]);
+        }
+
+        if (!isset($this->existing_enums_lc[$fq_class_name_lc])
+            || !$this->existing_enums_lc[$fq_class_name_lc]
+            || !$this->classlike_storage_provider->has($fq_class_name_lc)
+        ) {
+            if ((
+                !isset($this->existing_classes_lc[$fq_class_name_lc])
+                    || $this->existing_classes_lc[$fq_class_name_lc]
+                )
+                && !$this->classlike_storage_provider->has($fq_class_name_lc)
+            ) {
+                if (!isset($this->existing_enums_lc[$fq_class_name_lc])) {
+                    $this->existing_enums_lc[$fq_class_name_lc] = false;
+
+                    return false;
+                }
+
+                return $this->existing_enums_lc[$fq_class_name_lc];
+            }
+
+            return false;
+        }
+
+        if ($this->collect_references && $code_location) {
+            if ($calling_method_id) {
+                $this->file_reference_provider->addMethodReferenceToClass(
+                    $calling_method_id,
+                    $fq_class_name_lc
+                );
+            } else {
+                $this->file_reference_provider->addNonMethodReferenceToClass(
+                    $code_location->file_path,
+                    $fq_class_name_lc
+                );
+
+                if ($calling_fq_class_name) {
+                    $class_storage = $this->classlike_storage_provider->get($calling_fq_class_name);
+
+                    if ($class_storage->location
+                        && $class_storage->location->file_path !== $code_location->file_path
+                    ) {
+                        $this->file_reference_provider->addNonMethodReferenceToClass(
+                            $class_storage->location->file_path,
+                            $fq_class_name_lc
+                        );
+                    }
+                }
+            }
+        }
+
+        if ($this->collect_locations && $code_location) {
+            $this->file_reference_provider->addCallingLocationForClass(
+                $code_location,
+                strtolower($fq_class_name)
+            );
+        }
+
+        return true;
+    }
+
     public function hasFullyQualifiedTraitName(string $fq_class_name, ?CodeLocation $code_location = null): bool
     {
         $fq_class_name_lc = strtolower($fq_class_name);
@@ -464,30 +535,6 @@ class ClassLikes
 
         if (!isset($this->existing_traits_lc[$fq_class_name_lc]) ||
             !$this->existing_traits_lc[$fq_class_name_lc]
-        ) {
-            return false;
-        }
-
-        if ($this->collect_references && $code_location) {
-            $this->file_reference_provider->addNonMethodReferenceToClass(
-                $code_location->file_path,
-                $fq_class_name_lc
-            );
-        }
-
-        return true;
-    }
-
-    public function hasFullyQualifiedEnumName(string $fq_class_name, ?CodeLocation $code_location = null): bool
-    {
-        $fq_class_name_lc = strtolower($fq_class_name);
-
-        if (isset($this->classlike_aliases[$fq_class_name_lc])) {
-            $fq_class_name_lc = strtolower($this->classlike_aliases[$fq_class_name_lc]);
-        }
-
-        if (!isset($this->existing_enums_lc[$fq_class_name_lc]) ||
-            !$this->existing_enums_lc[$fq_class_name_lc]
         ) {
             return false;
         }
@@ -624,6 +671,24 @@ class ClassLikes
         );
     }
 
+    public function enumExists(
+        string $fq_enum_name,
+        ?CodeLocation $code_location = null,
+        ?string $calling_fq_class_name = null,
+        ?string $calling_method_id = null
+    ): bool {
+        if (isset(ClassLikeAnalyzer::SPECIAL_TYPES[strtolower($fq_enum_name)])) {
+            return false;
+        }
+
+        return $this->hasFullyQualifiedEnumName(
+            $fq_enum_name,
+            $code_location,
+            $calling_fq_class_name,
+            $calling_method_id
+        );
+    }
+
     public function interfaceExtends(string $interface_name, string $possible_parent): bool
     {
         return isset($this->getParentInterfaces($interface_name)[strtolower($possible_parent)]);
@@ -669,6 +734,15 @@ class ClassLikes
         }
 
         return isset($this->existing_interfaces[$fq_interface_name]);
+    }
+
+    public function enumHasCorrectCasing(string $fq_enum_name): bool
+    {
+        if (isset($this->classlike_aliases[strtolower($fq_enum_name)])) {
+            return true;
+        }
+
+        return isset($this->existing_enums[$fq_enum_name]);
     }
 
     public function traitHasCorrectCase(string $fq_trait_name): bool
@@ -2107,15 +2181,15 @@ class ClassLikes
 
     /**
      * @return array{
-     *     0: array<lowercase-string, bool>,
-     *     1: array<lowercase-string, bool>,
-     *     2: array<lowercase-string, bool>,
-     *     3: array<string, bool>,
-     *     4: array<lowercase-string, bool>,
-     *     5: array<string, bool>,
-     *     6: array<lowercase-string, bool>,
-     *     7: array<string, bool>,
-     *     8: array<string, bool>,
+     *     array<lowercase-string, bool>,
+     *     array<lowercase-string, bool>,
+     *     array<lowercase-string, bool>,
+     *     array<string, bool>,
+     *     array<lowercase-string, bool>,
+     *     array<string, bool>,
+     *     array<lowercase-string, bool>,
+     *     array<string, bool>,
+     *     array<string, bool>,
      * }
      */
     public function getThreadData(): array

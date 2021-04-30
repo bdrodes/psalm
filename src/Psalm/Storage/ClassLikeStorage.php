@@ -204,6 +204,11 @@ class ClassLikeStorage
     /**
      * @var bool
      */
+    public $is_enum = false;
+
+    /**
+     * @var bool
+     */
     public $external_mutation_free = false;
 
     /**

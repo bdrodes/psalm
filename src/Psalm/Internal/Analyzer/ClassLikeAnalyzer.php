@@ -260,6 +260,7 @@ abstract class ClassLikeAnalyzer extends SourceAnalyzer
             $calling_fq_class_name,
             $calling_method_id
         );
+
         $interface_exists = $codebase->classlikes->interfaceExists(
             $fq_class_name,
             !$options->inferred ? $code_location : null,
@@ -267,12 +268,22 @@ abstract class ClassLikeAnalyzer extends SourceAnalyzer
             $calling_method_id
         );
 
-        if (!$class_exists && !($interface_exists && $options->allow_interface)) {
+        $enum_exists = $codebase->classlikes->enumExists(
+            $fq_class_name,
+            !$options->inferred ? $code_location : null,
+            $calling_fq_class_name,
+            $calling_method_id
+        );
+
+        if (!$class_exists
+            && !($interface_exists && $options->allow_interface)
+            && !($enum_exists && $options->allow_enum)
+        ) {
             if (!$options->allow_trait || !$codebase->classlikes->traitExists($fq_class_name, $code_location)) {
                 if ($options->from_docblock) {
                     if (IssueBuffer::accepts(
                         new UndefinedDocblockClass(
-                            'Docblock-defined class or interface ' . $fq_class_name . ' does not exist',
+                            'Docblock-defined class, interface or enum named ' . $fq_class_name . ' does not exist',
                             $code_location,
                             $fq_class_name
                         ),
@@ -294,7 +305,7 @@ abstract class ClassLikeAnalyzer extends SourceAnalyzer
                 } else {
                     if (IssueBuffer::accepts(
                         new UndefinedClass(
-                            'Class or interface ' . $fq_class_name . ' does not exist',
+                            'Class, interface or enum named ' . $fq_class_name . ' does not exist',
                             $code_location,
                             $fq_class_name
                         ),
@@ -343,13 +354,14 @@ abstract class ClassLikeAnalyzer extends SourceAnalyzer
         }
 
         if (!$options->inferred) {
-            if (($class_exists && !$codebase->classHasCorrectCasing($fq_class_name)) ||
-                ($interface_exists && !$codebase->interfaceHasCorrectCasing($fq_class_name))
+            if (($class_exists && !$codebase->classHasCorrectCasing($fq_class_name))
+                || ($interface_exists && !$codebase->interfaceHasCorrectCasing($fq_class_name))
+                || ($enum_exists && !$codebase->classlikes->enumHasCorrectCasing($fq_class_name))
             ) {
                 if ($codebase->classlikes->isUserDefined(strtolower($aliased_name))) {
                     if (IssueBuffer::accepts(
                         new InvalidClass(
-                            'Class or interface ' . $fq_class_name . ' has wrong casing',
+                            'Class, interface or enum ' . $fq_class_name . ' has wrong casing',
                             $code_location,
                             $fq_class_name
                         ),

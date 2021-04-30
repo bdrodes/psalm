@@ -39,6 +39,7 @@ class AttributeAnalyzer
                 false,
                 false,
                 false,
+                false,
                 true
             )
         ) === false) {

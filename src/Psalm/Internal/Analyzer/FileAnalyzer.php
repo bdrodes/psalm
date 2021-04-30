@@ -252,6 +252,7 @@ class FileAnalyzer extends SourceAnalyzer
                             true,
                             false,
                             true,
+                            true,
                             true
                         )
                     ) === false) {

@@ -168,7 +168,7 @@ class TypeChecker extends NodeVisitor
                 $this->source->getFQCLN(),
                 $this->calling_method_id,
                 $this->suppressed_issues,
-                new ClassLikeNameOptions($this->inferred, false, true, $atomic->from_docblock)
+                new ClassLikeNameOptions($this->inferred, false, true, true, $atomic->from_docblock)
             ) === false
         ) {
             $this->has_errors = true;
@@ -306,7 +306,7 @@ class TypeChecker extends NodeVisitor
             null,
             null,
             $this->suppressed_issues,
-            new ClassLikeNameOptions($this->inferred, false, true, $atomic->from_docblock)
+            new ClassLikeNameOptions($this->inferred, false, true, true, $atomic->from_docblock)
         ) === false
         ) {
             $this->has_errors = true;

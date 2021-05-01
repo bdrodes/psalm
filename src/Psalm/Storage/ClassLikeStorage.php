@@ -433,6 +433,16 @@ class ClassLikeStorage
     public $attributes = [];
 
     /**
+     * @var array<string, EnumCaseStorage>
+     */
+    public $enum_cases = [];
+
+    /**
+     * @var 'int'|'string'|null
+     */
+    public $enum_type;
+
+    /**
      * @var ?string
      */
     public $description;

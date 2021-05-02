@@ -142,6 +142,26 @@ class EnumTest extends TestCase
                 false,
                 '8.1'
             ],
+            'insufficientMatches' => [
+                '<?php
+                    enum Suit {
+                        case Hearts;
+                        case Diamonds;
+                        case Clubs;
+                        case Spades;
+
+                        public function color(): string {
+                            return match($this) {
+                                Suit::Hearts, Suit::Diamonds => "Red",
+                                Suit::Clubs => "Black",
+                            };
+                        }
+                    }',
+                'error_message' => 'UnhandledMatchCondition',
+                [],
+                false,
+                '8.1'
+            ],
         ];
     }
 }

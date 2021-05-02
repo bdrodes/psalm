@@ -403,9 +403,27 @@ class NegatedAssertionReconciler extends Reconciler
                 if (get_class($atomic_type) === Type\Atomic\TNamedObject::class
                     && $atomic_type->value === $fq_enum_name
                 ) {
-                    $scalar_var_type = new Type\Union([new Type\Atomic\TEnumCase($fq_enum_name, $case_name)]);
+                    $codebase = $statements_analyzer->getCodebase();
+
+                    $enum_storage = $codebase->classlike_storage_provider->get($fq_enum_name);
+
+                    if (!$enum_storage->is_enum || !$enum_storage->enum_cases) {
+                        $scalar_var_type = new Type\Union([new Type\Atomic\TEnumCase($fq_enum_name, $case_name)]);
+                    } else {
+                        $existing_var_type->removeType($atomic_type);
+                        $did_remove_type = true;
+
+                        foreach ($enum_storage->enum_cases as $alt_case_name => $_) {
+                            if ($alt_case_name === $case_name) {
+                                continue;
+                            }
+
+                            $existing_var_type->addType(new Type\Atomic\TEnumCase($fq_enum_name, $alt_case_name));
+                        }
+                    }
                 } elseif ($atomic_type instanceof Type\Atomic\TEnumCase
                     && $atomic_type->value === $fq_enum_name
+                    && $atomic_type->case_name !== $case_name
                 ) {
                     $did_match_literal_type = true;
                 } elseif ($atomic_key === $assertion) {

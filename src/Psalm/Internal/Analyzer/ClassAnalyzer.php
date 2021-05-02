@@ -85,7 +85,10 @@ class ClassAnalyzer extends ClassLikeAnalyzer
      */
     public $inferred_property_types = [];
 
-    public function __construct(PhpParser\Node\Stmt\Class_ $class, SourceAnalyzer $source, ?string $fq_class_name)
+    /**
+     * @param PhpParser\Node\Stmt\Class_|PhpParser\Node\Stmt\Enum_ $class
+     */
+    public function __construct(PhpParser\Node\Stmt $class, SourceAnalyzer $source, ?string $fq_class_name)
     {
         if (!$fq_class_name) {
             $fq_class_name = self::getAnonymousClassName($class, $source->getFilePath());
@@ -93,11 +96,7 @@ class ClassAnalyzer extends ClassLikeAnalyzer
 
         parent::__construct($class, $source, $fq_class_name);
 
-        if (!$this->class instanceof PhpParser\Node\Stmt\Class_) {
-            throw new \InvalidArgumentException('Bad');
-        }
-
-        if ($this->class->extends) {
+        if ($this->class instanceof PhpParser\Node\Stmt\Class_ && $this->class->extends) {
             $this->parent_fq_class_name = self::getFQCLNFromNameObject(
                 $this->class->extends,
                 $this->source->getAliases()
@@ -120,7 +119,7 @@ class ClassAnalyzer extends ClassLikeAnalyzer
     ): ?bool {
         $class = $this->class;
 
-        if (!$class instanceof PhpParser\Node\Stmt\Class_) {
+        if (!$class instanceof PhpParser\Node\Stmt\Class_ && !$class instanceof PhpParser\Node\Stmt\Enum_) {
             throw new \LogicException('Something went badly wrong');
         }
 
@@ -233,7 +232,7 @@ class ClassAnalyzer extends ClassLikeAnalyzer
 
         $parent_fq_class_name = $this->parent_fq_class_name;
 
-        if ($class->extends && $parent_fq_class_name) {
+        if ($class instanceof PhpParser\Node\Stmt\Class_ && $class->extends && $parent_fq_class_name) {
             $this->checkParentClass(
                 $class,
                 $class->extends,
@@ -501,14 +500,16 @@ class ClassAnalyzer extends ClassLikeAnalyzer
 
         $config = Config::getInstance();
 
-        $this->checkPropertyInitialization(
-            $codebase,
-            $config,
-            $storage,
-            $class_context,
-            $global_context,
-            $constructor_analyzer
-        );
+        if ($class instanceof PhpParser\Node\Stmt\Class_) {
+            $this->checkPropertyInitialization(
+                $codebase,
+                $config,
+                $storage,
+                $class_context,
+                $global_context,
+                $constructor_analyzer
+            );
+        }
 
         foreach ($class->stmts as $stmt) {
             if ($stmt instanceof PhpParser\Node\Stmt\Property && !isset($stmt->type)) {
@@ -2153,9 +2154,12 @@ class ClassAnalyzer extends ClassLikeAnalyzer
         }
     }
 
+    /**
+     * @param PhpParser\Node\Stmt\Class_|PhpParser\Node\Stmt\Enum_ $class
+     */
     private function checkImplementedInterfaces(
         Context $class_context,
-        Class_ $class,
+        PhpParser\Node\Stmt $class,
         Codebase $codebase,
         string $fq_class_name,
         ClassLikeStorage $storage

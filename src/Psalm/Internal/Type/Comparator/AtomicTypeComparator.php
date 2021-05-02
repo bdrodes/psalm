@@ -614,7 +614,7 @@ class AtomicTypeComparator
 
         if ($container_type_part instanceof TNamedObject
             && $input_type_part instanceof TNamedObject
-            && $codebase->classOrInterfaceExists($input_type_part->value)
+            && $codebase->classOrInterfaceOrEnumExists($input_type_part->value)
             && (
                 (
                     $codebase->classExists($container_type_part->value)

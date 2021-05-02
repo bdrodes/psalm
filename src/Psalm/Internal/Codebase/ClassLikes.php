@@ -568,6 +568,25 @@ class ClassLikes
     }
 
     /**
+     * Check whether a class/interface exists
+     */
+    public function classOrInterfaceOrEnumExists(
+        string $fq_class_name,
+        ?CodeLocation $code_location = null,
+        ?string $calling_fq_class_name = null,
+        ?string $calling_method_id = null
+    ): bool {
+        if (!$this->classExists($fq_class_name, $code_location, $calling_fq_class_name, $calling_method_id)
+            && !$this->interfaceExists($fq_class_name, $code_location, $calling_fq_class_name, $calling_method_id)
+            && !$this->enumExists($fq_class_name, $code_location, $calling_fq_class_name, $calling_method_id)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Determine whether or not a given class exists
      */
     public function classExists(

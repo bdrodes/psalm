@@ -269,6 +269,11 @@ class ClassLikeNodeScanner
             $this->codebase->classlikes->addFullyQualifiedTraitName($fq_classlike_name, $this->file_path);
         } elseif ($node instanceof PhpParser\Node\Stmt\Enum_) {
             $storage->is_enum = true;
+
+            if ($node->scalarType) {
+                $storage->enum_type = $node->scalarType->name === 'string' ? 'string' : 'int';
+            }
+
             $this->codebase->classlikes->addFullyQualifiedEnumName($fq_classlike_name, $this->file_path);
         } else {
             throw new \UnexpectedValueException('Unknown classlike type');
@@ -635,6 +640,8 @@ class ClassLikeNodeScanner
         foreach ($node->stmts as $node_stmt) {
             if ($node_stmt instanceof PhpParser\Node\Stmt\ClassConst) {
                 $this->visitClassConstDeclaration($node_stmt, $storage, $fq_classlike_name);
+            } elseif ($node_stmt instanceof PhpParser\Node\Stmt\EnumCase && $node instanceof PhpParser\Node\Stmt\Enum_) {
+                $this->visitEnumDeclaration($node_stmt, $storage);
             }
         }
 
@@ -1225,6 +1232,43 @@ class ClassLikeNodeScanner
                     );
                 }
             }
+        }
+    }
+
+    private function visitEnumDeclaration(
+        PhpParser\Node\Stmt\EnumCase $stmt,
+        ClassLikeStorage $storage
+    ): void {
+        $comment = $stmt->getDocComment();
+        $deprecated = false;
+        $config = $this->config;
+
+        if ($comment && $comment->getText() && ($config->use_docblock_types || $config->use_docblock_property_types)) {
+            $comments = DocComment::parsePreservingLength($comment);
+
+            if (isset($comments->tags['deprecated'])) {
+                $deprecated = true;
+            }
+        }
+
+        $enum_value = null;
+
+        if ($stmt->expr instanceof PhpParser\Node\Scalar\String_
+            || $stmt->expr instanceof PhpParser\Node\Scalar\LNumber
+        ) {
+            $enum_value = $stmt->expr->value;
+        }
+
+        $storage->enum_cases[$stmt->name->name] = $constant_storage = new \Psalm\Storage\EnumCaseStorage(
+            $enum_value,
+            new CodeLocation(
+                $this->file_scanner,
+                $stmt->name
+            )
+        );
+
+        if ($deprecated) {
+            $constant_storage->deprecated = true;
         }
     }
 

@@ -900,9 +900,9 @@ class TypeParseTest extends TestCase
 
         $resolved_type = new Type\Union([
             new Type\Atomic\TLiteralString('baz'),
-            new Type\Atomic\TScalarClassConstant('One2', 'TWO_THREE'),
-            new Type\Atomic\TScalarClassConstant('Foo', 'BAR_BAR'),
-            new Type\Atomic\TScalarClassConstant('Bat\\Bar', 'BAZ_BAM'),
+            new Type\Atomic\TClassConstant('One2', 'TWO_THREE'),
+            new Type\Atomic\TClassConstant('Foo', 'BAR_BAR'),
+            new Type\Atomic\TClassConstant('Bat\\Bar', 'BAZ_BAM'),
         ]);
 
         $this->assertSame($resolved_type->getId(), $docblock_type->getId());

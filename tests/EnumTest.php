@@ -27,7 +27,7 @@ class EnumTest extends TestCase
                         public function color(): string {
                             return match($this) {
                                 Suit::Hearts, Suit::Diamonds => "Red",
-                                Suit::Clubs, Suit::Spaces => "Black",
+                                Suit::Clubs, Suit::Spades => "Black",
                             };
                         }
 
@@ -37,8 +37,14 @@ class EnumTest extends TestCase
                     }
 
                     function paint(Colourful $c): void {}
+                    function deal(Suit $s): void {
+                        if ($s === Suit::Clubs) {
+                            echo $s->color();
+                        }
+                    }
 
                     paint(Suit::Clubs);
+                    deal(Suit::Spades);
 
                     Suit::Diamonds->shape();',
                 [],
@@ -94,6 +100,44 @@ class EnumTest extends TestCase
 
                     echo Suit::Hearts->value;',
                 'error_message' => 'UndefinedPropertyFetch',
+                [],
+                false,
+                '8.1'
+            ],
+            'badSuit' => [
+                '<?php
+                    enum Suit {
+                        case Hearts;
+                        case Diamonds;
+                        case Clubs;
+                        case Spades;
+                    }
+
+                    function foo(Suit $s): void {
+                        if ($s === Suit::Clu) {}
+                    }',
+                'error_message' => 'UndefinedConstant',
+                [],
+                false,
+                '8.1'
+            ],
+            'cantCompareToSuitTwice' => [
+                '<?php
+                    enum Suit {
+                        case Hearts;
+                        case Diamonds;
+                        case Clubs;
+                        case Spades;
+                    }
+
+                    function foo(Suit $s): void {
+                        if ($s === Suit::Clubs)  {
+                            if ($s === Suit::Clubs) {
+                                echo "bad";
+                            }
+                        }
+                    }',
+                'error_message' => 'RedundantCondition',
                 [],
                 false,
                 '8.1'

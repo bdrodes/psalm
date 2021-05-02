@@ -23,12 +23,12 @@ class TEnumCase extends TNamedObject
 
     public function getKey(bool $include_extra = true): string
     {
-        return $this->value . '::' . $this->case_name;
+        return 'enum(' . $this->value . '::' . $this->case_name . ')';
     }
 
     public function getId(bool $nested = false): string
     {
-        return $this->value . '::' . $this->case_name;
+        return 'enum(' . $this->value . '::' . $this->case_name . ')';
     }
 
     public function toPhpString(

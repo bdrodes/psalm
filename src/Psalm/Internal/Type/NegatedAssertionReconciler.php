@@ -396,6 +396,23 @@ class NegatedAssertionReconciler extends Reconciler
                 $scalar_value = substr($assertion, $bracket_pos + 1, -1);
                 $scalar_var_type = Type::getFloat((float) $scalar_value);
             }
+        } elseif ($scalar_type === 'enum') {
+            list($fq_enum_name, $case_name) = explode('::', substr($assertion, $bracket_pos + 1, -1));
+
+            foreach ($existing_var_type->getAtomicTypes() as $atomic_key => $atomic_type) {
+                if (get_class($atomic_type) === Type\Atomic\TNamedObject::class
+                    && $atomic_type->value === $fq_enum_name
+                ) {
+                    $scalar_var_type = new Type\Union([new Type\Atomic\TEnumCase($fq_enum_name, $case_name)]);
+                } elseif ($atomic_type instanceof Type\Atomic\TEnumCase
+                    && $atomic_type->value === $fq_enum_name
+                ) {
+                    $did_match_literal_type = true;
+                } elseif ($atomic_key === $assertion) {
+                    $existing_var_type->removeType($assertion);
+                    $did_remove_type = true;
+                }
+            }
         }
 
         if ($key && $code_location) {

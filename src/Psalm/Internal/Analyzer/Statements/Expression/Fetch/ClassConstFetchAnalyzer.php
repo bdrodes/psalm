@@ -203,7 +203,11 @@ class ClassConstFetchAnalyzer
             $const_class_storage = $codebase->classlike_storage_provider->get($fq_class_name);
 
             if ($const_class_storage->is_enum) {
-                $class_constant_type = new Type\Union([new Type\Atomic\TEnumCase($fq_class_name, $stmt->name->name)]);
+                if (isset($const_class_storage->enum_cases[$stmt->name->name])) {
+                    $class_constant_type = new Type\Union([new Type\Atomic\TEnumCase($fq_class_name, $stmt->name->name)]);
+                } else {
+                    $class_constant_type = null;
+                }
             } else {
                 if ($fq_class_name === $context->self
                     || (

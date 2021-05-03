@@ -255,10 +255,11 @@ class TaintFlowGraph extends DataFlowGraph
             );
 
             \sort($new_taints);
-
-            if (isset($visited_source_ids[$to_id][implode(',', $new_taints)])) {
-                continue;
-            }
+            
+            //NOTE: this code will skip multiple paths to the same sink through different modules. 
+//             if (isset($visited_source_ids[$to_id][implode(',', $new_taints)])) {
+//                 continue;
+//             }
 
             if (self::shouldIgnoreFetch($path_type, 'arraykey', $generated_source->path_types)) {
                 continue;

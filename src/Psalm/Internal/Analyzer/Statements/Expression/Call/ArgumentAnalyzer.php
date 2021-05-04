@@ -17,7 +17,6 @@ use Psalm\Internal\DataFlow\DataFlowNode;
 use Psalm\Internal\Codebase\TaintFlowGraph;
 use Psalm\Internal\Codebase\VariableUseGraph;
 use Psalm\Internal\MethodIdentifier;
-use Psalm\Internal\Scanner\UnresolvedConstantComponent;
 use Psalm\Internal\Type\TemplateBound;
 use Psalm\Internal\Type\TemplateResult;
 use Psalm\Internal\Type\TemplateStandinTypeReplacer;
@@ -1278,7 +1277,7 @@ class ArgumentAnalyzer
                                     '__call'
                                 );
 
-                                if (!$codebase->classOrInterfaceExists($callable_fq_class_name)) {
+                                if (!$codebase->classOrInterfaceOrEnumExists($callable_fq_class_name)) {
                                     return;
                                 }
 

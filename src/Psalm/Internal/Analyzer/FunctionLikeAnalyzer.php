@@ -27,7 +27,6 @@ use Psalm\Issue\UnusedClosureParam;
 use Psalm\Issue\UnusedParam;
 use Psalm\IssueBuffer;
 use Psalm\Plugin\EventHandler\Event\AfterFunctionLikeAnalysisEvent;
-use Psalm\StatementsSource;
 use Psalm\Storage\FunctionLikeStorage;
 use Psalm\Storage\MethodStorage;
 use Psalm\Type;
@@ -196,6 +195,9 @@ abstract class FunctionLikeAnalyzer extends SourceAnalyzer
         ] = $function_information;
 
         $this->suppressed_issues = $this->getSource()->getSuppressedIssues() + $storage->suppressed_issues;
+        if ($appearing_class_storage) {
+            $this->suppressed_issues += $appearing_class_storage->suppressed_issues;
+        }
 
         if ($storage instanceof MethodStorage && $storage->is_static) {
             $this->is_static = true;
@@ -627,6 +629,7 @@ abstract class FunctionLikeAnalyzer extends SourceAnalyzer
                     new ClassLikeNameOptions(
                         false,
                         false,
+                        true,
                         true,
                         true
                     )

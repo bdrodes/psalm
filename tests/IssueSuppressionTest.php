@@ -277,6 +277,18 @@ class IssueSuppressionTest extends TestCase
                         strlen(123, 456, 789);
                     }',
             ],
+            'possiblyNullSuppressedAtClassLevel' => [
+                '<?php
+                    /** @psalm-suppress PossiblyNullReference */
+                    class C {
+                        private ?DateTime $mightBeNull = null;
+
+                        public function m(): string {
+                            return $this->mightBeNull->format("");
+                        }
+                    }
+                '
+            ],
         ];
     }
 
@@ -297,7 +309,7 @@ class IssueSuppressionTest extends TestCase
                             new C();
                         }
                     }',
-                'error_message' => 'UndefinedClass - src' . DIRECTORY_SEPARATOR . 'somefile.php:8:33 - Class or interface C',
+                'error_message' => 'UndefinedClass - src' . DIRECTORY_SEPARATOR . 'somefile.php:8:33 - Class, interface or enum named C',
             ],
             'undefinedClassOneLineInFileAfter' => [
                 '<?php
@@ -306,7 +318,7 @@ class IssueSuppressionTest extends TestCase
                      */
                     new B();
                     new C();',
-                'error_message' => 'UndefinedClass - src' . DIRECTORY_SEPARATOR . 'somefile.php:6:25 - Class or interface C',
+                'error_message' => 'UndefinedClass - src' . DIRECTORY_SEPARATOR . 'somefile.php:6:25 - Class, interface or enum named C',
             ],
             'missingParamTypeShouldntPreventUndefinedClassError' => [
                 '<?php

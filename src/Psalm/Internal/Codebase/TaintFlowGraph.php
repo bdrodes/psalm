@@ -181,7 +181,7 @@ class TaintFlowGraph extends DataFlowGraph
 
     public function connectSinksAndSources() : void
     {
-        $visited_source_ids = [];
+        $visited_paths = [];
 
         $sources = $this->sources;
         $sinks = $this->sinks;
@@ -198,20 +198,26 @@ class TaintFlowGraph extends DataFlowGraph
                 $source_taints = $source->taints;
                 \sort($source_taints);
 
-                $visited_source_ids[$source->id][implode(',', $source_taints)] = true;
-
                 $generated_sources = $this->getSpecializedSources($source);
 
                 foreach ($generated_sources as $generated_source) {
-                    $new_sources = array_merge(
-                        $new_sources,
-                        $this->getChildNodes(
-                            $generated_source,
-                            $source_taints,
-                            $sinks,
-                            $visited_source_ids
-                        )
-                    );
+                    if(isset($generated_source->code_location)){
+                        $path = $this->getPredecessorPath($generated_source);
+                    }
+                    else{
+                        $path = $generated_source->id;
+                    }
+                    if (!isset($visited_paths[$path])){
+                        $visited_paths[$path] = True;
+                        $new_sources = array_merge(
+                            $new_sources,
+                            $this->getChildNodes(
+                                $generated_source,
+                                $source_taints,
+                                $sinks
+                            )
+                        );
+                    }
                 }
             }
 
@@ -227,8 +233,7 @@ class TaintFlowGraph extends DataFlowGraph
     private function getChildNodes(
         DataFlowNode $generated_source,
         array $source_taints,
-        array $sinks,
-        array $visited_source_ids
+        array $sinks
     ) : array {
         $new_sources = [];
 
